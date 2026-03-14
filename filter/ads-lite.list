@@ -1,0 +1,11 @@
+host-suffix,doubleclick.net,reject
+host-suffix,googlesyndication.com,reject
+host-suffix,googleadservices.com,reject
+host-suffix,adservice.google.com,reject
+host-suffix,ads.facebook.com,reject
+host-suffix,analytics.facebook.com,reject
+host-suffix,ads.tiktok.com,reject
+host-suffix,analytics.tiktok.com,reject
+host-suffix,adnxs.com,reject
+host-suffix,taboola.com,reject
+host-suffix,outbrain.com,reject
