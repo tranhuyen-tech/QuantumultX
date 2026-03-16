@@ -1,30 +1,23 @@
-if (!$response.body) $done({});
-
-let obj;
+let body = $response.body;
 
 try {
-  obj = JSON.parse($response.body);
-} catch {
-  $done({});
-}
+let obj = JSON.parse(body);
 
-// enable background playback
-if (obj.playabilityStatus)
-  obj.playabilityStatus.backgroundPlayback = { allowed: true };
+// enable background
+obj.playabilityStatus && (obj.playabilityStatus.backgroundPlayback = {allowed:true});
 
-// enable PiP
-if (obj.playerConfig?.audioConfig)
-  obj.playerConfig.audioConfig.backgroundable = true;
+// enable pip
+obj.playerConfig && (obj.playerConfig.audioConfig = {backgroundable:true});
 
 // remove ads
-delete obj.playerAds;
 delete obj.adPlacements;
+delete obj.playerAds;
 delete obj.adSlots;
+delete obj.adBreakHeartbeatParams;
+delete obj.adBreakParams;
 
-// remove promoted videos
-if (obj.contents)
-  obj.contents = JSON.parse(
-    JSON.stringify(obj.contents).replace(/"promoted[A-Za-z]+":\{.*?\}/g, "")
-  );
+$done({body:JSON.stringify(obj)});
 
-$done({ body: JSON.stringify(obj) });
+} catch(e) {
+$done({body});
+}
