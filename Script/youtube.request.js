@@ -1,27 +1,14 @@
-if (!$request.body) $done({});
-
-let obj;
+let body = $request.body;
 
 try {
-  obj = JSON.parse($request.body);
-} catch {
-  $done({});
+let obj = JSON.parse(body);
+
+if (obj.contentPlaybackContext) {
+delete obj.contentPlaybackContext.adPlaybackContext;
 }
 
-// remove ad signals
-if (obj.context?.adSignalsInfo)
-  delete obj.context.adSignalsInfo;
+$done({body: JSON.stringify(obj)});
 
-// remove ad placements
-delete obj.adPlacements;
-delete obj.playerAds;
-delete obj.adSlots;
-
-// disable ad request flags
-if (obj.playbackContext)
-  obj.playbackContext.contentPlaybackContext = {
-    ...obj.playbackContext.contentPlaybackContext,
-    adSignalsInfo: null
-  };
-
-$done({ body: JSON.stringify(obj) });
+} catch(e) {
+$done({});
+}
