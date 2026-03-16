@@ -1,14 +1,14 @@
 let body = $request.body;
 
 try {
-let obj = JSON.parse(body);
+  let obj = JSON.parse(body);
 
-if (obj.contentPlaybackContext) {
-delete obj.contentPlaybackContext.adPlaybackContext;
-}
+  if (obj.context?.client) {
+    obj.context.client.clientName = "ANDROID";
+    obj.context.client.clientVersion = "19.09.37";
+  }
 
-$done({body: JSON.stringify(obj)});
+  body = JSON.stringify(obj);
+} catch (e) {}
 
-} catch(e) {
-$done({});
-}
+$done({ body });
