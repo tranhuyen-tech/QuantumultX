@@ -1,48 +1,37 @@
 // YouTube Premium unlock (2026 stable)
 
-let body = $response.body;
+let obj;
 
 try {
-
-let obj = JSON.parse(body);
+  obj = JSON.parse($response.body);
+} catch {
+  $done({});
+}
 
 // enable background playback
-if (obj.playabilityStatus) {
-    obj.playabilityStatus.backgroundPlayback = { allowed: true };
-}
+if (obj.playabilityStatus)
+  obj.playabilityStatus.backgroundPlayback = { allowed: true };
 
-// enable pip & background
-if (obj.playerConfig) {
-    obj.playerConfig.audioConfig = { backgroundable: true };
-}
+// enable pip + background
+if (obj.playerConfig)
+  obj.playerConfig.audioConfig = { backgroundable: true };
 
-// premium flags
-if (obj.responseContext) {
-    obj.responseContext.serviceTrackingParams = obj.responseContext.serviceTrackingParams || [];
-}
+// improve streaming stability
+if (obj.streamingData)
+  obj.streamingData.enableServerAbrStreaming = true;
 
-// player settings
-if (obj.streamingData) {
-    obj.streamingData.enableServerAbrStreaming = true;
-}
+// recursive ad cleaner
+const clean = x => {
+  if (!x || typeof x !== "object") return;
 
-// ad removal
-if (obj.adPlacements) {
-    delete obj.adPlacements;
-}
+  for (let k in x) {
+    if (/ad|ads|promoted|playerAds|adPlacements/i.test(k))
+      delete x[k];
+    else
+      clean(x[k]);
+  }
+};
 
-if (obj.playerAds) {
-    delete obj.playerAds;
-}
-
-if (obj.adSlots) {
-    delete obj.adSlots;
-}
+clean(obj);
 
 $done({ body: JSON.stringify(obj) });
-
-} catch (e) {
-
-$done({ body });
-
-}
