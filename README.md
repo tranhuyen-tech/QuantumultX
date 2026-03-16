@@ -1,2 +1,2 @@
 # QuantumultX
-Link liên kết Youtube cho QX https://raw.githubusercontent.com/Ender-Wang/YouTubeAds-PiP-BackgroundPlay/main/YouTubeAds.conf
+Link liên kết Youtube cho QX: [Youtube Ads.conf](https://github.com/ddgksf2013/Rewrite/blob/master/AdBlock/YoutubeAds.conf)
