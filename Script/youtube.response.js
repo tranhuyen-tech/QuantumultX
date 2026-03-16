@@ -1,22 +1,32 @@
 let body = $response.body;
 
 try {
-let obj = JSON.parse(body);
+  let obj = JSON.parse(body);
 
-if (obj.playabilityStatus) {
-obj.playabilityStatus.backgroundPlayback = {allowed: true};
-}
+  function cleanAds(o) {
+    if (!o || typeof o !== "object") return;
 
-if (obj.playerConfig) {
-obj.playerConfig.audioConfig = {backgroundable: true};
-}
+    delete o.adPlacements;
+    delete o.playerAds;
+    delete o.adSlots;
+    delete o.adBreakHeartbeatParams;
 
-delete obj.adPlacements;
-delete obj.playerAds;
-delete obj.adSlots;
+    for (let k in o) cleanAds(o[k]);
+  }
 
-$done({body: JSON.stringify(obj)});
+  cleanAds(obj);
 
-} catch(e) {
-$done({body});
-}
+  // enable background play
+  if (obj?.playabilityStatus?.backgroundPlaybackConfig) {
+    obj.playabilityStatus.backgroundPlaybackConfig.enabled = true;
+  }
+
+  // keep miniplayer (pip)
+  if (obj?.miniplayerRenderer) {
+    obj.miniplayerRenderer = obj.miniplayerRenderer;
+  }
+
+  body = JSON.stringify(obj);
+} catch (e) {}
+
+$done({ body });
