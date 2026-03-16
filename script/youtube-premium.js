@@ -1,5 +1,7 @@
 // YouTube Premium unlock (2026 stable)
 
+if (!$response.body) $done({});
+
 let obj;
 
 try {
@@ -8,30 +10,17 @@ try {
   $done({});
 }
 
-// enable background playback
+// Enable background playback
 if (obj.playabilityStatus)
   obj.playabilityStatus.backgroundPlayback = { allowed: true };
 
-// enable pip + background
-if (obj.playerConfig)
-  obj.playerConfig.audioConfig = { backgroundable: true };
+// Enable PiP
+if (obj.playerConfig?.audioConfig)
+  obj.playerConfig.audioConfig.backgroundable = true;
 
-// improve streaming stability
-if (obj.streamingData)
-  obj.streamingData.enableServerAbrStreaming = true;
-
-// recursive ad cleaner
-const clean = x => {
-  if (!x || typeof x !== "object") return;
-
-  for (let k in x) {
-    if (/ad|ads|promoted|playerAds|adPlacements/i.test(k))
-      delete x[k];
-    else
-      clean(x[k]);
-  }
-};
-
-clean(obj);
+// Remove ads (lightweight)
+delete obj.playerAds;
+delete obj.adPlacements;
+delete obj.adSlots;
 
 $done({ body: JSON.stringify(obj) });
