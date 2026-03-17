@@ -1,0 +1,87 @@
+let body = $response.body;
+
+if (!body) {
+  $done({});
+}
+
+try {
+  let obj = JSON.parse(body);
+
+  // ===== 1. Remove Ads Core =====
+  const cleanAds = (data) => {
+    if (!data) return;
+
+    // remove ads arrays
+    delete data.adPlacements;
+    delete data.playerAds;
+    delete data.adSlots;
+
+    // recursive clean
+    if (typeof data === "object") {
+      for (let key in data) {
+        if (typeof data[key] === "object") {
+          cleanAds(data[key]);
+        }
+      }
+    }
+  };
+
+  cleanAds(obj);
+
+  // ===== 2. Shorts / Feed Ads =====
+  if (obj.contents) {
+    let items =
+      obj.contents?.twoColumnBrowseResultsRenderer?.tabs ||
+      obj.contents?.singleColumnBrowseResultsRenderer?.tabs;
+
+    if (items) {
+      items.forEach((tab) => {
+        let sections =
+          tab?.tabRenderer?.content?.sectionListRenderer?.contents;
+
+        if (sections) {
+          sections.forEach((section) => {
+            let contents =
+              section?.itemSectionRenderer?.contents || [];
+
+            section.itemSectionRenderer.contents = contents.filter(
+              (item) => !JSON.stringify(item).includes("ad")
+            );
+          });
+        }
+      });
+    }
+  }
+
+  // ===== 3. Search Ads =====
+  if (obj.contents?.twoColumnSearchResultsRenderer) {
+    let results =
+      obj.contents.twoColumnSearchResultsRenderer.primaryContents
+        ?.sectionListRenderer?.contents || [];
+
+    results.forEach((section) => {
+      if (section.itemSectionRenderer?.contents) {
+        section.itemSectionRenderer.contents =
+          section.itemSectionRenderer.contents.filter(
+            (item) => !item.promotedSparklesTextSearchRenderer
+          );
+      }
+    });
+  }
+
+  // ===== 4. Player Config =====
+  if (obj.playerConfig) {
+    obj.playerConfig.playbackStartConfig = {
+      startSeconds: 0,
+    };
+  }
+
+  // ===== 5. Safety Optimize =====
+  // tránh crash khi YouTube đổi schema
+  body = JSON.stringify(obj);
+
+} catch (e) {
+  console.log("YT Optimize Error: " + e);
+}
+
+$done({ body });
