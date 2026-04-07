@@ -1,0 +1,114 @@
+/*
+应用名称：Bilibili Global (bilibili.tv) 去广告脚本
+Gốc từ: Cuttlefish
+Chuyển hệ sang Global: Assistant
+*/
+const scriptName = "BiliBiliGlobal";
+const storyAidKey = "bilibili_story_aid";
+const blackKey = "bilibili_feed_black";
+let magicJS = MagicJS(scriptName, "INFO");
+
+let blacklist = [];
+if (magicJS.read(blackKey)) {
+  blacklist = magicJS.read(blackKey).split(";");
+} else {
+  const defaultList = "";
+  magicJS.write(blackKey, defaultList);
+  blacklist = defaultList.split(";");
+}
+
+(() => {
+  let body = null;
+  if (magicJS.isResponse) {
+    const url = magicJS.request.url;
+    switch (true) {
+      // 1. Trang chủ (Feed) - Bản Global
+      case /https:\/\/api\.bilibili\.tv\/intl\/gateway\/v2\/app\/index\/feed/.test(url):
+        try {
+          let obj = JSON.parse(magicJS.response.body);
+          let items = [];
+          if (obj.data && obj.data.items) {
+              for (let item of obj["data"]["items"]) {
+                if (item.hasOwnProperty("banner_item")) {
+                  let bannerItems = [];
+                  for (let banner of item["banner_item"]) {
+                    if (banner["type"] === "ad") continue;
+                    else if (banner["static_banner"] && banner["static_banner"]["is_ad_loc"] != true) {
+                      bannerItems.push(banner);
+                    }
+                  }
+                  if (bannerItems.length >= 1) {
+                    item["banner_item"] = bannerItems;
+                    items.push(item);
+                  }
+                } else if (
+                  !item.hasOwnProperty("ad_info") &&
+                  item.card_goto?.indexOf("ad") === -1 &&
+                  (item["card_type"] === "small_cover_v2" || item["card_type"] === "large_cover_v1")
+                ) {
+                  items.push(item);
+                }
+              }
+              obj["data"]["items"] = items;
+          }
+          body = JSON.stringify(obj);
+        } catch (err) {
+          magicJS.logError(`Feed Global lỗi: ${err}`);
+        }
+        break;
+
+      // 2. Tab Giao diện (Bottom Bar/Top Tab) - Bản Global
+      case /https:\/\/api\.bilibili\.tv\/intl\/gateway\/v2\/app\/resource\/show\/tab/.test(url):
+        try {
+          let obj = JSON.parse(magicJS.response.body);
+          // Giữ nguyên logic lọc tab của tác giả
+          const tabList = new Set([39, 40, 41, 774, 857, 545, 151, 442, 99, 100, 101, 554, 556]);
+          if (obj["data"] && obj["data"]["tab"]) {
+            obj["data"]["tab"] = obj["data"]["tab"].filter(e => tabList.has(e.id));
+          }
+          body = JSON.stringify(obj);
+        } catch (err) {
+          magicJS.logError(`Tab Global lỗi: ${err}`);
+        }
+        break;
+
+      // 3. Trang Cá nhân (Mine) - Bản Global
+      case /https:\/\/api\.bilibili\.tv\/intl\/gateway\/v2\/app\/account\/mine/.test(url):
+        try {
+          let obj = JSON.parse(magicJS.response.body);
+          if (obj["data"] && obj["data"]["sections_v2"]) {
+              const itemList = new Set([396, 397, 398, 399, 402, 404, 407, 410, 425, 426, 427, 428, 430, 432, 433, 434, 494, 495, 496, 497, 500, 501]);
+              obj["data"]["sections_v2"].forEach((element, index) => {
+                let items = element["items"].filter(e => itemList.has(e.id));
+                obj["data"]["sections_v2"][index]["items"] = items;
+              });
+          }
+          // Mở khóa Premium giả lập (như script gốc)
+          if (obj["data"]) {
+              obj["data"]["vip_type"] = 2;
+              if(obj["data"]["vip"]) obj["data"]["vip"]["status"] = 1;
+          }
+          body = JSON.stringify(obj);
+        } catch (err) {
+          magicJS.logError(`Mine Global lỗi: ${err}`);
+        }
+        break;
+
+      // 4. Tìm kiếm (Square/Hotword) - Bản Global
+      case /https:\/\/api\.bilibili\.tv\/intl\/gateway\/v2\/app\/search\/square/.test(url):
+        try {
+          let obj = JSON.parse(magicJS.response.body);
+          obj.data = { "type": "history", "title": "History", "search_hotword_revision": 2 };
+          body = JSON.stringify(obj);
+        } catch (err) {
+          magicJS.logError(`Search Global lỗi: ${err}`);
+        }
+        break;
+    }
+    if (body) {
+      $done({ body });
+    } else {
+      $done({});
+    }
+  }
+})();
