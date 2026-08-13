@@ -6,9 +6,9 @@
 var responseData = JSON.parse($response.body);
 
 // ========= CAU HINH GUZHENG MASTER ========= //
-var productidmap = {
-  'com.sensornotes.guzhengmaster': ['guzheng', 'guzheng_lifetime', 0],
-  'default': ['guzheng', 'guzheng_lifetime', 0]
+var productidmap = { 
+  'com.sensornotes.guzhengmaster': ['guzheng', 'com.sensornotes.guzhengmaster.vipversion', 0], 
+  'default': ['guzheng', 'com.sensornotes.guzhengmaster.vipversion', 0] 
 };
 
 // ========= PHAN XAC THUC HOA DON ========= //
